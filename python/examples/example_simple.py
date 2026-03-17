@@ -12,16 +12,16 @@
 # *   Cirrus Link Solutions - initial implementation
 # ********************************************************************************/
 import sys
-sys.path.insert(0, "../core/")
+sys.path.insert(0, "../")
 #print(sys.path)
 
 import paho.mqtt.client as mqtt
-import sparkplug_b as sparkplug
+import sparkplug_b.sparkplug_b as spb
 import time
 import random
 import string
 
-from sparkplug_b import *
+#from sparkplug_b import *
 
 # Application Variables
 serverUrl = "localhost"
@@ -35,11 +35,11 @@ myPassword = "changeme"
 ######################################################################
 # The callback for when the client receives a CONNACK response from the server.
 ######################################################################
-def on_connect(client, userdata, flags, rc):
-    if rc == 0:
-        print("Connected with result code "+str(rc))
+def on_connect(client, userdata, flags, reason_code, properties):
+    if not reason_code.is_failure:
+        print("Connected with result code "+str(reason_code))
     else:
-        print("Failed to connect with result code "+str(rc))
+        print("Failed to connect with result code "+str(reason_code))
         sys.exit()
 
     global myGroupId
@@ -59,7 +59,7 @@ def on_message(client, userdata, msg):
     tokens = msg.topic.split("/")
 
     if tokens[0] == "spBv1.0" and tokens[1] == myGroupId and (tokens[2] == "NCMD" or tokens[2] == "DCMD") and tokens[3] == myNodeName:
-        inboundPayload = sparkplug_b_pb2.Payload()
+        inboundPayload = spb.sparkplug_b_pb2.Payload()
         inboundPayload.ParseFromString(msg.payload)
         for metric in inboundPayload.metrics:
             if metric.name == "Node Control/Next Server":
@@ -92,8 +92,8 @@ def on_message(client, userdata, msg):
                 print( "CMD message for output/Device Metric2 - New Value: {}".format(newValue))
 
                 # Create the DDATA payload
-                payload = sparkplug.getDdataPayload()
-                addMetric(payload, None, None, MetricDataType.Int16, newValue)
+                payload = spb.getDdataPayload()
+                spb.addMetric(payload, None, None, spb.MetricDataType.Int16, newValue)
 
                 # Publish a message data
                 byteArray = bytearray(payload.SerializeToString())
@@ -109,8 +109,8 @@ def on_message(client, userdata, msg):
                 print( "CMD message for output/Device Metric3 - New Value: %r" % newValue)
 
                 # Create the DDATA payload
-                payload = sparkplug.getDdataPayload()
-                addMetric(payload, None, None, MetricDataType.Boolean, newValue)
+                payload = spb.getDdataPayload()
+                spb.addMetric(payload, None, None, spb.MetricDataType.Boolean, newValue)
 
                 # Publish a message data
                 byteArray = bytearray(payload.SerializeToString())
@@ -138,22 +138,22 @@ def publishNodeBirth():
     print( "Publishing Node Birth")
 
     # Create the node birth payload
-    payload = sparkplug.getNodeBirthPayload()
+    payload = spb.getNodeBirthPayload()
 
     # Set up the Node Controls
-    addMetric(payload, "Node Control/Next Server", None, MetricDataType.Boolean, False)
-    addMetric(payload, "Node Control/Rebirth", None, MetricDataType.Boolean, False)
-    addMetric(payload, "Node Control/Reboot", None, MetricDataType.Boolean, False)
+    spb.addMetric(payload, "Node Control/Next Server", None, spb.MetricDataType.Boolean, False)
+    spb.addMetric(payload, "Node Control/Rebirth", None, spb.MetricDataType.Boolean, False)
+    spb.addMetric(payload, "Node Control/Reboot", None, spb.MetricDataType.Boolean, False)
 
     # Add some regular node metrics
-    addMetric(payload, "Node Metric0", None, MetricDataType.String, "hello node")
-    addMetric(payload, "Node Metric1", None, MetricDataType.Boolean, True)
-    addNullMetric(payload, "Node Metric3", None, MetricDataType.Int32)
+    spb.addMetric(payload, "Node Metric0", None, spb.MetricDataType.String, "hello node")
+    spb.addMetric(payload, "Node Metric1", None, spb.MetricDataType.Boolean, True)
+    spb.addNullMetric(payload, "Node Metric3", None, spb.MetricDataType.Int32)
 
     # Create a DataSet (012 - 345) two rows with Int8, Int16, and Int32 contents and headers Int8s, Int16s, Int32s and add it to the payload
     columns = ["Int8s", "Int16s", "Int32s"]
-    types = [DataSetDataType.Int8, DataSetDataType.Int16, DataSetDataType.Int32]
-    dataset = initDatasetMetric(payload, "DataSet", None, columns, types)
+    types = [spb.DataSetDataType.Int8, spb.DataSetDataType.Int16, spb.DataSetDataType.Int32]
+    dataset = spb.initDatasetMetric(payload, "DataSet", None, columns, types)
     row = dataset.rows.add()
     element = row.elements.add();
     element.int_value = 0
@@ -170,20 +170,20 @@ def publishNodeBirth():
     element.int_value = 5
 
     # Add a metric with a custom property
-    metric = addMetric(payload, "Node Metric2", None, MetricDataType.Int16, 13)
+    metric = spb.addMetric(payload, "Node Metric2", None, spb.MetricDataType.Int16, 13)
     metric.properties.keys.extend(["engUnit"])
     propertyValue = metric.properties.values.add()
-    propertyValue.type = ParameterDataType.String
+    propertyValue.type = spb.ParameterDataType.String
     propertyValue.string_value = "MyCustomUnits"
 
     # Create the UDT definition value which includes two UDT members and a single parameter and add it to the payload
-    template = initTemplateMetric(payload, "_types_/Custom_Motor", None, None)
+    template = spb.initTemplateMetric(payload, "_types_/Custom_Motor", None, None)
     templateParameter = template.parameters.add()
     templateParameter.name = "Index"
-    templateParameter.type = ParameterDataType.String
+    templateParameter.type = spb.ParameterDataType.String
     templateParameter.string_value = "0"
-    addMetric(template, "RPMs", None, MetricDataType.Int32, 0)
-    addMetric(template, "AMPs", None, MetricDataType.Int32, 0)
+    spb.addMetric(template, "RPMs", None, spb.MetricDataType.Int32, 0)
+    spb.addMetric(template, "AMPs", None, spb.MetricDataType.Int32, 0)
 
     # Publish the node birth certificate
     byteArray = bytearray(payload.SerializeToString())
@@ -197,23 +197,23 @@ def publishDeviceBirth():
     print( "Publishing Device Birth")
 
     # Get the payload
-    payload = sparkplug.getDeviceBirthPayload()
+    payload = spb.getDeviceBirthPayload()
 
     # Add some device metrics
-    addMetric(payload, "input/Device Metric0", None, MetricDataType.String, "hello device")
-    addMetric(payload, "input/Device Metric1", None, MetricDataType.Boolean, True)
-    addMetric(payload, "output/Device Metric2", None, MetricDataType.Int16, 16)
-    addMetric(payload, "output/Device Metric3", None, MetricDataType.Boolean, True)
-    addMetric(payload, "DateTime Metric", None, MetricDataType.DateTime, long(time.time() * 1000))
+    spb.addMetric(payload, "input/Device Metric0", None, spb.MetricDataType.String, "hello device")
+    spb.addMetric(payload, "input/Device Metric1", None, spb.MetricDataType.Boolean, True)
+    spb.addMetric(payload, "output/Device Metric2", None, spb.MetricDataType.Int16, 16)
+    spb.addMetric(payload, "output/Device Metric3", None, spb.MetricDataType.Boolean, True)
+    spb.addMetric(payload, "DateTime Metric", None, spb.MetricDataType.DateTime, int(time.time() * 1000))
 
     # Create the UDT definition value which includes two UDT members and a single parameter and add it to the payload
-    template = initTemplateMetric(payload, "My_Custom_Motor", None, "Custom_Motor")
+    template = spb.initTemplateMetric(payload, "My_Custom_Motor", None, "Custom_Motor")
     templateParameter = template.parameters.add()
     templateParameter.name = "Index"
-    templateParameter.type = ParameterDataType.String
+    templateParameter.type = spb.ParameterDataType.String
     templateParameter.string_value = "1"
-    addMetric(template, "RPMs", None, MetricDataType.Int32, 123)
-    addMetric(template, "AMPs", None, MetricDataType.Int32, 456)
+    spb.addMetric(template, "RPMs", None, spb.MetricDataType.Int32, 123)
+    spb.addMetric(template, "AMPs", None, spb.MetricDataType.Int32, 456)
 
     # Publish the initial data with the Device BIRTH certificate
     totalByteArray = bytearray(payload.SerializeToString())
@@ -226,10 +226,11 @@ def publishDeviceBirth():
 print("Starting main application")
 
 # Create the node death payload
-deathPayload = sparkplug.getNodeDeathPayload()
+deathPayload = spb.getNodeDeathPayload()
 
 # Start of main program - Set up the MQTT client connection
-client = mqtt.Client(serverUrl, 1883, 60)
+client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+#client = mqtt.Client(serverUrl, 1883, 60)
 client.on_connect = on_connect
 client.on_message = on_message
 client.username_pw_set(myUsername, myPassword)
@@ -246,16 +247,16 @@ publishBirth()
 
 while True:
     # Periodically publish some new data
-    payload = sparkplug.getDdataPayload()
+    payload = spb.getDdataPayload()
 
     # Add some random data to the inputs
-    addMetric(payload, None, None, MetricDataType.String, ''.join(random.choice(string.ascii_lowercase) for i in range(12)))
+    spb.addMetric(payload, None, None, spb.MetricDataType.String, ''.join(random.choice(string.ascii_lowercase) for i in range(12)))
 
     # Note this data we're setting to STALE via the propertyset as an example
-    metric = addMetric(payload, None, None, MetricDataType.Boolean, random.choice([True, False]))
+    metric = spb.addMetric(payload, None, None, spb.MetricDataType.Boolean, random.choice([True, False]))
     metric.properties.keys.extend(["Quality"])
     propertyValue = metric.properties.values.add()
-    propertyValue.type = ParameterDataType.Int32
+    propertyValue.type = spb.ParameterDataType.Int32
     propertyValue.int_value = 500
 
     # Publish a message data
