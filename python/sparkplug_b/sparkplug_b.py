@@ -10,10 +10,10 @@
 # * Contributors:
 # *   Cirrus Link Solutions - initial implementation
 # ********************************************************************************/
-import sparkplug_b_pb2
+import sparkplug_b.sparkplug_b_pb2 as sparkplug_b_pb2
 import time
-from sparkplug_b_pb2 import Payload
-from array_packer import *
+from sparkplug_b.sparkplug_b_pb2 import Payload
+from sparkplug_b.array_packer import *
 
 seqNum = 0
 bdSeq = 0
