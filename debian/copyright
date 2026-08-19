@@ -1,0 +1,9 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Eclipse Tahu
+Source: https://projects.eclipse.org/projects/iot.tahu
+
+Files: *
+Copyright: 2014-2021 Cirrus Link Solutions and others
+License: EPL-2.0 OR EDL-1.0
+ The contents of this package are distributed under either the Eclipse Public
+ License 2.0 or the Eclipse Distribution License 1.0.

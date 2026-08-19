@@ -1,0 +1,14 @@
+Source: tahu
+Section: python
+Priority: optional
+Maintainer: Eclipse Tahu Contributors <noreply@example.com>
+Build-Depends: debhelper-compat (= 13), dh-python, python3-all, python3-setuptools, python3-protobuf
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+Homepage: https://projects.eclipse.org/projects/iot.tahu
+
+Package: python3-sparkplug-b
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}, python3-protobuf
+Description: Sparkplug B Python helpers
+ Python helpers and generated protobuf bindings for Sparkplug B.

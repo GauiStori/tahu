@@ -1,0 +1,5 @@
+tahu (1.0.0-1) unstable; urgency=medium
+
+  * Initial Debian packaging for the Python Sparkplug B helpers.
+
+ -- Eclipse Tahu Contributors <noreply@example.com>  Wed, 19 Aug 2026 00:00:00 +0200
